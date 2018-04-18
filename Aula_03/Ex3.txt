@@ -1,0 +1,7 @@
+3.
+(a) Ola eu
+(b) Ola "eu
+(c) Digite seu nome: Ola eu
+(d) Digite seu nome: Ola eu
+(e) Digite seu nome: Ola eu
+(f) Digite seu nome: Ola ola

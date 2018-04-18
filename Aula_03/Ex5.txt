@@ -1,0 +1,7 @@
+5.
+(a) Ola eu
+(b) Ola eu mesmo
+(c) Ola (null)
+(d) Ola (null)
+(e) Ola (null)
+(f) Ola (null)
