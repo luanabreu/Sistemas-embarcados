@@ -5,18 +5,20 @@ import Adafruit_DHT
 import os
 import time
 import glob
+from mq import *
+import sys, time
 
 # global variables
-dbname='/var/www/templog.db'
+dbname='/var/www/gas.db'
 
 # store the temperature and hummidity in the database
-def log_temperature(temp,humm):
+def log_gas(CO,GAS_LPG):
 
     conn=sqlite3.connect(dbname)
     curs=conn.cursor()
 
-    curs.execute("INSERT INTO temp_hum values(datetime('now'), (?), (?))", (temp,humm))
-    #curs.execute("INSERT INTO temp_hum values(datetime('now'), (?))", (humm,))
+    curs.execute("INSERT INTO gas values(datetime('now'), (?), (?))", (CO,GAS_LPG))
+    #curs.execute("INSERT INTO temp_hum values(datetime('now'), (?))", (GAS_LPG,))
     # commit the changes
     conn.commit()
 
@@ -29,30 +31,31 @@ def display_data():
     conn=sqlite3.connect(dbname)
     curs=conn.cursor()
 
-    for row in curs.execute("SELECT * FROM temp_hum"):
+    for row in curs.execute("SELECT * FROM gas"):
         print str(row[0])+”     “+str(row[1])+”        “+str(row[2])
 
     conn.close()
 
 # get temerature and humidity
 # returns None on error, or the temperature,humidity as a float
-def get_temp_hum():
+def get_gas():
         try:
-                humm, temp = Adafruit_DHT.read_retry(Adafruit_DHT.DHT22, 4)
-                humm = round (humm, 2)
-                temp = round (temp, 2)
-                return humm, temp
+                mq = MQ();
+                perc = mq.MQPercentage()
+                GAS_LPG = perc["GAS_LPG"]
+                CO = perc["CO"]
+                return CO, GAS_LPG
+            
         except:
                 return None, None
 
 # main function
-# This is where the program starts
 def main():
-        # get the temperature from the device file
-        humm, temp = get_temp_hum()
+        # get the gas from the device file
+        CO, GAS_LPG = get_gas()
         # Store data to DB in case we have values
-        if (humm != None and temp !='None'):
-                log_temperature(humm, temp)
+        if (CO != None and GAS_LPG !='None'):
+                log_gas(CO, GAS_LPG)
 #       display_data()
 
 if __name__=="__main__":
