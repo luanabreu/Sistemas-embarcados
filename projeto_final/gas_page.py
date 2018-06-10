@@ -4,9 +4,11 @@ import os
 import sys
 import cgi
 import cgitb
+from mq import *
+import sys, time
 
 # global variables
-dbname='/var/www/templog.db'
+dbname='/var/www/gas.db'
 
 # print the HTTP header
 def printHTTPheader():
@@ -34,9 +36,9 @@ def get_data(interval):
     curs=conn.cursor()
 
     if interval == None:
-        curs.execute("SELECT * FROM temp_hum")
+        curs.execute("SELECT * FROM gas")
     else:
-        curs.execute("SELECT * FROM temp_hum WHERE timestamp>datetime('now','-%s hours') AND timestamp<=datetime('now')" % interval)
+        curs.execute("SELECT * FROM gas WHERE timestamp>datetime('now','-%s hours') AND timestamp<=datetime('now')" % interval)
 
     rows=curs.fetchall()
 
@@ -71,11 +73,11 @@ def print_graph_script(table):
       google.setOnLoadCallback(drawChart);
       function drawChart() {
         var data = google.visualization.arrayToDataTable([
-          [‘Time’, ‘Humidity’, ‘Temperature’],
+          [‘Time’, ‘CO2’, ‘Gas LPG’],
 %s
         ]);
         var options = {
-          title: 'Temperature and Humidity'
+          title: 'LPG e CO2'
         };
         var chart = new google.visualization.LineChart(document.getElementById('chart_div'));
         chart.draw(data, options);
@@ -89,7 +91,7 @@ def print_graph_script(table):
 
 # print the div that contains the graph
 def show_graph():
-    print "<h2>Temperature Chart</h2>"
+    print "<h2>CO Chart</h2>"
     print '<div id="chart_div" style="width: 900px; height: 500px;"></div>'
 
 # connect to the db and show some stats
@@ -102,51 +104,51 @@ def show_stats(option):
     if option is None:
         option = str(24)
 
-    curs.execute("SELECT timestamp,max(temp) FROM temp_hum WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
-    tempmax=curs.fetchone()
-    tempmax="{0}&nbsp&nbsp&nbsp{1} %".format(str(tempmax[0]),str(tempmax[1]))
+    curs.execute("SELECT timestamp,max(temp) FROM gas WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
+    comax=curs.fetchone()
+    comax="{0}&nbsp&nbsp&nbsp{1} %".format(str(tempmax[0]),str(tempmax[1]))
 
-    curs.execute("SELECT timestamp,min(temp) FROM temp_hum WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
-    tempmin=curs.fetchone()
-    tempmin="{0}&nbsp&nbsp&nbsp{1} %".format(str(tempmin[0]),str(tempmin[1]))
+    curs.execute("SELECT timestamp,min(temp) FROM gas WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
+    comin=curs.fetchone()
+    comin="{0}&nbsp&nbsp&nbsp{1} %".format(str(tempmin[0]),str(tempmin[1]))
 
-    curs.execute("SELECT avg(temp) FROM temp_hum WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
-    tempavg=curs.fetchone()
+    curs.execute("SELECT avg(temp) FROM gas WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
+    coavg=curs.fetchone()
 
-    curs.execute("SELECT timestamp,max(humm) FROM temp_hum WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
-    hummmax=curs.fetchone()
-    hummmax="{0}&nbsp&nbsp&nbsp{1} C".format(str(hummmax[0]),str(hummmax[1]))
+    curs.execute("SELECT timestamp,max(humm) FROM gas WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
+    gas_lpgmax=curs.fetchone()
+    gas_lpgmax="{0}&nbsp&nbsp&nbsp{1} C".format(str(hummmax[0]),str(hummmax[1]))
 
-    curs.execute("SELECT timestamp,min(humm) FROM temp_hum WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
-    hummmin=curs.fetchone()
-    hummmin="{0}&nbsp&nbsp&nbsp{1} C".format(str(hummmin[0]),str(hummmin[1]))
+    curs.execute("SELECT timestamp,min(humm) FROM gas WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
+    gas_lpgmin=curs.fetchone()
+    gas_lpgmin="{0}&nbsp&nbsp&nbsp{1} C".format(str(hummmin[0]),str(hummmin[1]))
 
-    curs.execute("SELECT avg(humm) FROM temp_hum WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
-    hummavg=curs.fetchone()
+    curs.execute("SELECT avg(humm) FROM  WHERE timestamp>datetime('now','-%s hour') AND timestamp<=datetime('now')" % option)
+    gas_lpgavg=curs.fetchone()
 
 
     print "<hr>"
 
 
     print "<h2>Minumum Value&nbsp</h2>"
-    print tempmin
-    print hummmin
+    print comin
+    print gas_lpgmin
     print "<h2>Maximum Value</h2>"
-    print tempmax
-    print hummmax
+    print comax
+    print gas_lpgmax
     print "<h2>Average Value</h2>"
-    print "%.1f" % tempavg+"%"
-    print "%.1f" % hummavg+"C"
+    print "%.1f" % coavg+"%"
+    print "%.1f" % gas_lpgavg+"C"
     print "<hr>"
 
     print "<h2>In the last hour:</h2>"
     print "<table>"
-    print "<tr><td><strong>Date/Time</strong></td><td><strong>Temperature</strong><td><strong>Humidity</strong></td></td></tr>"
+    print "<tr><td><strong>Date/Time</strong></td><td><strong>CO</strong><td><strong>GAS_LPG</strong></td></td></tr>"
 
-    rows=curs.execute("SELECT * FROM temp_hum WHERE timestamp>datetime('now','-1 hour') AND timestamp<=datetime('now')")
+    rows=curs.execute("SELECT * FROM gas WHERE timestamp>datetime('now','-1 hour') AND timestamp<=datetime('now')")
     for row in rows:
-        tempstr="<tr><td>{0}&emsp;&emsp;</td><td>{1} %</td><td>{2} C</td></tr>".format(str(row[0]),str(row[1]),str(row[2]))
-        print tempstr
+        costr="<tr><td>{0}&emsp;&emsp;</td><td>{1} %</td><td>{2} C</td></tr>".format(str(row[0]),str(row[1]),str(row[2]))
+        print costr
     print "</table>"
 
     print "<hr>"
@@ -156,7 +158,7 @@ def show_stats(option):
 def print_time_selector(option):
 
     print """<form action="/cgi-bin/webgui.py" method="POST">
-        Show the temperature logs for
+        Comportamento do CO2 e do gas LPG
         <select name="timeinterval">"""
 
 
@@ -245,11 +247,11 @@ def main():
     print "<html>"
     # print the head section including the table
     # used by the javascript for the chart
-    printHTMLHead("Raspberry Pi Temperature and Humidity Logger", table)
+    printHTMLHead("Monitor de Gases Polentes", table)
 
     # print the page body
     print "<body>"
-    print "<h1>Raspberry Pi Temperature and Humidity Logger</h1>"
+    print "<h1>Monitor de Gases Polentes</h1>"
     print "<hr>"
     print_time_selector(option)
     show_graph()
